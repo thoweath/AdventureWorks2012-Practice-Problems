@@ -1,0 +1,51 @@
+--Tom Weatherall
+--10/4/2016
+--Question 2
+
+
+if object_id(N'tempdb..#tmpPromoEffect') is not null drop table dbo.#tmpPromoEffect
+
+select soh.SalesOrderID, x.StateProvinceCode, soh.OrderDate, soh.SubTotal, soh.Freight,
+case
+	when soh.SubTotal between cast(1700 as money) and cast(2000 as money) 
+		then 'Increase subtotal to 2000 and change frieght to 0.22'  
+	when soh.SubTotal >= cast(2000 as money) 
+		then 'Keep subtotal the same and change freight to 0.22'
+	when  soh.SubTotal <= cast(1700 as money) 
+		then 'Keep subtotal and frieght the same'
+end as PotentialPromoEffect,
+case
+	when soh.SubTotal between cast(1700 as money) and cast(2000 as money) 
+		then (cast(2000 as money) - soh.SubTotal)
+	else cast(0 as money)
+end as PotentialOrderGain,
+case
+	when soh.SubTotal > cast(1700 as money) 
+		then cast(0.22 as money) - soh.Freight
+	else cast(0 as money)
+end as PotentialFreighLoss,
+case
+	when soh.SubTotal between cast(1700 as money) and cast(2000 as money) 
+		then (cast(2000 as money) + cast(0.22 as money)) - (soh.SubTotal + soh.Freight)
+	when soh.SubTotal >= cast(2000 as money) 
+		then (soh.SubTotal + cast(0.22 as money)) - (soh.SubTotal + soh.Freight)
+	when  soh.SubTotal <= cast(1700 as money) 
+		then (soh.SubTotal + soh.Freight)
+end as PotentialPromoNetGainLoss
+into #tmpPromoEffect		
+from sales.SalesOrderHeader soh
+inner join
+(
+select sp.StateProvinceCode, sp.StateProvinceID, a.AddressID, a.AddressLine1 
+from person.StateProvince sp
+inner join person.Address a
+on sp.StateProvinceID = a.StateProvinceID) x
+on soh.ShipToAddressID = x.AddressID
+where x.StateProvinceCode = 'CA'
+and CONVERT(varchar(10), soh.OrderDate, 20) between '2007-07-01' and '2008-06-30'
+
+
+select a.PotentialPromoEffect, sum(a.PotentialOrderGain) AggOrderGain, sum(a.PotentialFreighLoss) AggFreightLoss, sum(a.PotentialPromoNetGainLoss) AggPromoNetGainLoss
+from dbo.#tmpPromoEffect a
+group by a.PotentialPromoEffect
+

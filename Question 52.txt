@@ -1,0 +1,23 @@
+--Tom Weatherall
+--10/19
+--Question 52
+
+--Create temp employee rates table
+select h.BusinessEntityID, h.Rate, rank() over(partition by h.businessentityid order by h.ratechangedate Desc) as MostRecentPayRate
+into #tmpEmpPayRates
+from HumanResources.EmployeePayHistory h
+
+--FINAL OUTPUT: employee pay rates and percent change from latest to prior pay rate
+select e.BusinessEntityID, isnull(y.PriorPayRate,0) PriorPayRate, x.LatestPayRate, 
+concat(cast(case
+	when isnull(y.PriorPayRate,0) = 0 then 0 else round(((x.LatestPayRate-y.PriorPayRate)/y.PriorPayRate)*100,2)
+end as varchar),'%') as PercentChange
+from #tmpEmpPayRates e
+left join
+(select pr.BusinessEntityID, pr.Rate LatestPayRate from #tmpEmpPayRates pr
+where pr.MostRecentPayRate in (1)) x
+on e.BusinessEntityID = x.BusinessEntityID
+left join
+(select pr.BusinessEntityID, pr.Rate PriorPayRate from #tmpEmpPayRates pr
+where pr.MostRecentPayRate in (2)) y
+on x.BusinessEntityID = y.BusinessEntityID

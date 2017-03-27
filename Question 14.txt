@@ -1,0 +1,32 @@
+--Tom Weatherall
+--10/10
+--Question 14
+
+select  p.ProductID, p.Name, sum(sod.OrderQty) QuantityOrdered, x.OrderDate
+from sales.SalesOrderDetail sod
+inner join Production.Product p
+on sod.ProductID = p.ProductID
+inner join sales.SalesOrderHeader soh
+on sod.SalesOrderID = soh.SalesOrderID
+inner join (
+select  pod.productID, poh.OrderDate, pod.OrderQty
+from Purchasing.PurchaseOrderHeader poh
+inner join purchasing.PurchaseOrderDetail pod
+on poh.PurchaseOrderID = pod.PurchaseOrderID
+where year(poh.OrderDate) = '2007') x
+on p.ProductID = x.ProductID
+group by x.OrderDate,p.ProductID, p.Name
+order by QuantityOrdered desc
+
+
+select  pod.productID, poh.OrderDate, pod.OrderQty
+from Purchasing.PurchaseOrderHeader poh
+inner join purchasing.PurchaseOrderDetail pod
+on poh.PurchaseOrderID = pod.PurchaseOrderID
+where year(poh.OrderDate) = '2007'
+
+select * from Purchasing.PurchaseOrderDetail pod
+select * from Purchasing.PurchaseOrderHeader
+
+
+

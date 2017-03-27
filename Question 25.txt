@@ -1,0 +1,12 @@
+--Tom Weatherall
+--10/11
+--Question 25
+
+--Sales revenue ranked by territory for FY 2006 & 2007
+select year(soh.orderdate) FiscalYear, soh.TerritoryID, t.Name, sum(SubTotal) Revenue, ROW_NUMBER() over(order by sum(subtotal) desc) as TerritoryRank
+from sales.SalesOrderHeader soh
+inner join sales.SalesTerritory t
+on soh.TerritoryID = t.TerritoryID
+where soh.OrderDate >= cast('2005-07-01' as datetime) and soh.OrderDate <= cast('2008-06-30' as datetime)
+group by soh.TerritoryID,  t.Name, year(soh.OrderDate)
+order by TerritoryRank

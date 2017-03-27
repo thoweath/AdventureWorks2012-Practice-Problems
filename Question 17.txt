@@ -1,0 +1,14 @@
+--Tom Weatherall
+--10/11
+--Question 17
+
+--list of stores with last order date at least 12 months ago
+select s.BusinessEntityID, c.CustomerID ,c.StoreID, s.Name, max(soh.OrderDate) LastOrderDate, DATEDIFF(month,max(soh.orderdate),cast('2008-10-08' as datetime)) MonthsSinceLastOrder
+from [Sales].[Customer] c
+inner join [Sales].[Store] s
+on c.StoreID = s.BusinessEntityID
+inner join [Sales].[SalesOrderHeader] soh
+on c.CustomerID = soh.CustomerID
+--where (month(GETDATE()) - month(soh.OrderDate)) >= 12
+group by s.BusinessEntityID, c.StoreID, s.Name, c.CustomerID
+having DATEDIFF(month,max(soh.orderdate),cast('2008-10-08' as datetime)) >= 12

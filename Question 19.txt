@@ -1,0 +1,43 @@
+--Tom Weatherall
+--10/11
+--Question 19
+
+drop table #ScrapReason
+drop table #WrkOrdrCnt
+drop table #MaxCount
+
+--selects products and only the top (max) work order with scrap reason
+select w.productID, w.productName, m.MaxCnt, w.ScrapReason
+from #WrkOrdrCnt w
+inner join #MaxCount m
+on w.productID = m.productID
+and w.NumberOfWorkOrder = m.maxcnt
+order by m.maxcnt desc
+
+--create tmp table for products and workorder counts
+select w.ProductID, p.Name productName, count(*) NumberOfWorkOrder, s.Name ScrapReason
+into #WrkOrdrCnt
+from [Production].[ScrapReason] s
+inner join  [Production].[WorkOrder] w
+on s.ScrapReasonID = w.ScrapReasonID
+inner join Production.Product p
+on w.ProductID = p.ProductID
+group by w.ProductID, p.Name, s.Name
+order by NumberOfWorkOrder desc
+
+--create tmp table for max workorder count and product
+select s.productID, max(s.NumberOfWorkOrder) MaxCnt
+into #MaxCount
+from #ScrapReason s
+group by s.productID
+
+
+--create temp table for scrap reason to join to workorder temp table
+select w.ProductID, count(*) NumberOfWorkOrder, s.Name ScrapReason
+into #ScrapReason
+from [Production].[ScrapReason] s
+inner join  [Production].[WorkOrder] w
+on s.ScrapReasonID = w.ScrapReasonID
+inner join Production.Product p
+on w.ProductID = p.ProductID
+group by w.ProductID, p.Name, s.Name

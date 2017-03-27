@@ -1,0 +1,24 @@
+
+--Tom Weatherall
+--10/13
+--Question 33
+
+--segment employees by age group 
+select e.jobtitle,
+case 
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) < 18 then '<18'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 18 and DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) <= 35 then '18 - 35'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 36 and DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) <= 50 then '36 - 50'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 51 and DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) < 60 then '51 - 60'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 61 then '61+'
+end as AgeRange,ep.rate, count(*) Employees
+from HumanResources.Employee e
+inner join [HumanResources].[EmployeePayHistory] ep
+on e.BusinessEntityID = ep.BusinessEntityID
+group by  e.jobtitle,ep.rate,
+ case when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) < 18 then '<18'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 18 and DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) <= 35 then '18 - 35'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 36 and DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) <= 50 then '36 - 50'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 51 and DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) < 60 then '51 - 60'
+	when DATEDIFF(year,e.BirthDate, cast('2008-01-01' as datetime)) >= 61 then '61+' end 
+order by JobTitle

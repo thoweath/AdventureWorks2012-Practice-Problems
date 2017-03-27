@@ -1,0 +1,18 @@
+--Tom Weatherall
+--10/17
+--Question 37
+
+--list of most expensive product, second most expensive product, and price diff between them expressed as decimal percentage
+select v.ProductID, max(v.standardprice) MostExpPrice, x2.StandardPrice SecondMostExpPrice, 
+Round((max(v.standardprice)/x2.StandardPrice)/x2.StandardPrice,2) as PercentDiff
+from Purchasing.ProductVendor v
+inner join
+(select * from 
+(
+select v.ProductID, v.standardprice, rank() over (partition by v.productID order by v.standardprice desc) as PriceRank
+from Purchasing.ProductVendor v
+group by v.ProductID, v.StandardPrice) x
+where x.PriceRank = 2) x2
+on v.ProductID = x2.ProductID
+group by v.ProductID, x2.StandardPrice
+order by v.ProductID

@@ -1,0 +1,23 @@
+--Tom Weatherall
+--10/17
+--Question 42
+
+--Temp table with top 5 most successful salespeople
+select top 5 soh.SalesPersonID, rank() over(order by sum(soh.subtotal) desc) [Rank], sum(soh.subtotal) TotalRev
+into #tmpTop5
+from sales.SalesOrderHeader soh
+where soh.OnlineOrderFlag = 0
+group by soh.SalesPersonID
+
+--Temp table with top 5 least successful salespeople
+select top 5 soh.SalesPersonID, rank() over(order by sum(soh.subtotal) asc) [Rank], sum(soh.subtotal) TotalRev
+into #tmpBottom5
+from sales.SalesOrderHeader soh
+where soh.OnlineOrderFlag = 0
+group by soh.SalesPersonID
+
+--Join top 5 with bottom 5 on rank
+select t.SalesPersonID, t.TotalRev, b.SalesPersonID, b.TotalRev
+from #tmpTop5 t
+inner join #tmpBottom5 b
+on t.Rank = b.Rank

@@ -1,0 +1,34 @@
+--Tom Weatherall
+--10/10
+--Question 16
+
+--create temp table for online orders
+drop table #tmpOnlineOrders
+select st.TerritoryID, st.Name, SOH.OnlineOrderFlag, COUNT(*) Orders
+into #tmpOnlineOrders
+from [Sales].[SalesOrderHeader] soh
+inner join [Sales].[SalesTerritory] st
+on soh.TerritoryID = st.TerritoryID
+where OnlineOrderFlag = 1
+group by st.Name, soh.OnlineOrderFlag, st.TerritoryID
+order by st.Name
+
+--create temp table for non-online orders
+drop table #tmpNotOnlineOrders
+select st.TerritoryID, st.Name, SOH.OnlineOrderFlag, COUNT(*) Orders
+into #tmpNotOnlineOrders
+from [Sales].[SalesOrderHeader] soh
+inner join [Sales].[SalesTerritory] st
+on soh.TerritoryID = st.TerritoryID
+where OnlineOrderFlag = 0
+group by st.Name, soh.OnlineOrderFlag, st.TerritoryID
+order by st.Name
+
+--join temp tables and calc % of online vs non-online orders
+select o.TerritoryID, (o.Orders + n.Orders) TotalOrders, 
+concat(round(100*(cast(o.Orders as float)/(cast(o.Orders as float)+cast(n.Orders as float))),0),'%') PercentOnline, 
+concat(round(100*(cast(n.Orders as float)/(cast(o.Orders as float)+cast(n.Orders as float))),0),'%')  PercentOffline
+from #tmpOnlineOrders o
+inner join #tmpNotOnlineOrders n
+on o.TerritoryID = n.TerritoryID
+order by o.TerritoryID

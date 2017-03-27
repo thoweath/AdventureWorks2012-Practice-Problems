@@ -1,0 +1,10 @@
+--Tom Weatherall
+--10/5/2016
+--Question 4
+
+select DATENAME(weekday, soh.orderdate) as WeekDay, sum(soh.subtotal) as Revenue, count(*) as Orders,avg(soh.subtotal) as AverageOrder
+from sales.SalesOrderHeader soh
+where CONVERT(varchar(10), soh.OrderDate, 20) between '2007-07-01' and '2008-06-30'
+and soh.OnlineOrderFlag <> 1
+group by DATENAME(weekday, soh.orderdate), datepart(dw, soh.orderdate) 
+order by datepart(dw, soh.orderdate) 

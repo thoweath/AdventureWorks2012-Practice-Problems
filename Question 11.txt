@@ -1,0 +1,10 @@
+--Tom Weatherall
+--10/10
+--Question 11
+
+--max sales rate for each country
+select max(st.TaxRate),sp.CountryRegionCode
+from [Sales].[SalesTaxRate] st
+inner join [Person].[StateProvince] sp
+on st.StateProvinceID = sp.StateProvinceID
+group by sp.CountryRegionCode

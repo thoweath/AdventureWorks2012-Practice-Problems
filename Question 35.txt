@@ -1,0 +1,14 @@
+--Tom Weatherall
+--10/14
+--Question 35
+
+--Create view with employee names and job titles
+create view Question35v as
+select p.FirstName, p.LastName, e.JobTitle
+from [HumanResources].[Employee] e
+inner join Person.Person p
+on e.BusinessEntityID = p.BusinessEntityID
+GO
+
+select * from Question35v
+

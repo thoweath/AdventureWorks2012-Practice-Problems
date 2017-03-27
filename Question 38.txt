@@ -1,0 +1,14 @@
+--Tom Weatherall
+--10/17
+--Question 38
+
+--display profit margins on bike models currently sold
+select p.ProductModelID, p.Name, round(((p.ListPrice - p.StandardCost)/p.StandardCost),2) ProfitMargin
+from Production.Product p
+inner join Production.ProductSubcategory sc
+on p.ProductSubcategoryID = sc.ProductSubcategoryID
+inner join Production.ProductCategory c
+on sc.ProductCategoryID = c.ProductCategoryID
+where p.SellEndDate is null
+and c.Name = 'Bikes'
+

@@ -1,0 +1,11 @@
+--Tom Weatherall
+--10/11
+--Question 21
+
+--list of employees with hire dates before 2002 and after 2004
+select p.FirstName, p.LastName, e.JobTitle, e.BirthDate, e.MaritalStatus, e.HireDate
+from [HumanResources].[Employee] e
+inner join person.person p
+on e.BusinessEntityID = p.BusinessEntityID
+where year(e.hiredate) > '2004' or year(e.hiredate) < '2002'
+

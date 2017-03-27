@@ -1,0 +1,17 @@
+--Tom Weatherall
+--10/11
+--Question 20
+
+--stores with main offices in Toronto
+select s.Name, a.AddressLine1, a.AddressLine2, a.City, sp.StateProvinceCode, a.PostalCode, at.Name
+from [Sales].[Store] s
+inner join [Person].[BusinessEntityAddress] ba
+on s.BusinessEntityID = ba.BusinessEntityID
+inner join [Person].[Address] a
+on ba.AddressID = a.AddressID
+inner join [Person].[AddressType] at
+on ba.AddressTypeID = at.AddressTypeID --type 3 is main office
+inner join [Person].[StateProvince] sp
+on a.StateProvinceID = sp.StateProvinceID
+where at.AddressTypeID = '3'
+and a.City like 'Toronto'

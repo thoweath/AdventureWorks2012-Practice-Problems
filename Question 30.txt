@@ -1,0 +1,16 @@
+--Tom Weatherall
+--10/11
+--Question 30
+
+
+--Number of employees by shift in the production department
+select d.Name, s.Name, count(*) Employees
+from [HumanResources].[Department] d
+inner join [HumanResources].[EmployeeDepartmentHistory] dh
+on d.DepartmentID = dh.DepartmentID
+inner join HumanResources.Employee e
+on e.BusinessEntityID = dh.BusinessEntityID
+inner join [HumanResources].[Shift] s
+on s.ShiftID = dh.ShiftID
+where d.Name = 'Production'
+group by d.Name, s.Name

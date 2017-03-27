@@ -1,0 +1,19 @@
+--Tom Weatherall
+--10/6
+--Question 7
+
+select soh.SalesPersonID,p.LastName Lastname, st.Name, sum(soh.SubTotal) [2008Revenue] 
+--into #tmpSalesPersonByTerritory
+from person.person p
+inner join sales.salesorderheader soh
+on p.BusinessEntityID = soh.SalesPersonID
+inner join sales.SalesTerritoryHistory sth
+on sth.BusinessEntityID = soh.SalesPersonID
+inner join sales.SalesTerritory st
+on st.TerritoryID = sth.TerritoryID
+where st.Name in ('Northwest','Southwest','Canada')
+and CONVERT(varchar(10), soh.OrderDate, 20) between '2007-07-01' and '2008-06-30'
+and sth.EndDate is null
+group by soh.SalesPersonID, st.Name, p.LastName
+order by st.Name
+

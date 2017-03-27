@@ -1,0 +1,14 @@
+--Tom Weatherall
+--10/11
+--Question 22
+
+
+--link emails to business entity IDs to see who left what review
+select pr.ProductReviewID, pr.ProductID, prod.Name, pr.ReviewerName, pr.Rating, pr.EmailAddress, p.BusinessEntityID
+from [Production].[ProductReview] pr
+inner join [Person].[EmailAddress] e
+on pr.EmailAddress = e.EmailAddress
+inner join person.Person p
+on e.BusinessEntityID = p.BusinessEntityID
+inner join Production.Product prod
+on pr.ProductID = prod.ProductID

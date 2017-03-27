@@ -1,0 +1,24 @@
+--Tom Weatherall
+--10/17
+--Question 50
+
+--Create temp table for sales orders and reason influence
+DROP TABLE #tmpReasonInfluence
+select sohr.salesorderid,
+case
+	when count(distinct r.Name) > 1 then 'Contributing Reason' else 'Exclusive Reason'
+end as ReasonInfluence
+into #tmpReasonInfluence
+from sales.salesorderheadersalesreason sohr
+inner join sales.SalesReason r
+on sohr.SalesReasonID = r.SalesReasonID
+group by sohr.salesorderid
+
+--FINAL OUTPUT: Count of sales orders by reason name and reason influence
+select r.Name, ri.ReasonInfluence, count(*) SalesOrderCount
+from sales.SalesOrderHeaderSalesReason sohr
+inner join #tmpReasonInfluence ri
+on sohr.SalesOrderID = ri.salesorderid
+inner join sales.SalesReason r
+on sohr.SalesReasonID = r.SalesReasonID
+group by r.Name, ri.ReasonInfluence

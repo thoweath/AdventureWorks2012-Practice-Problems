@@ -1,0 +1,228 @@
+--Tom Weatherall
+--10/6
+--Question 9
+
+exec uspFindColumn 'category'
+
+select * from [Sales].[SalesOrderDetail]
+select * from [Sales].[SalesOrderHeader]
+select * from Production.Product
+select * from Production.ProductCategory
+select * from [Production].[ProductDescription]
+select * from [Production].[ProductSubcategory]
+
+--Part 1 Find % of sales with at least 1 bike and 1 accessory and at least 1 bike and at least 2 unique clothing items
+--Listing of all Sales orders and associated products contained in each order
+select sod.SalesOrderID, p.ProductID, psc.ProductCategoryID, pc.Name
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+--where pc.Name in ('Bikes', 'Accessories')
+group by sod.SalesOrderID, p.ProductID, psc.ProductCategoryID, pc.Name
+order by sod.SalesOrderID
+
+--percentage of sales orders containing at least one bike and at least one accessory
+declare @TotalSalesOrder float
+set @TotalSalesOrder = (select count(*) from sales.SalesOrderDetail sod)
+
+declare @TotalBikeAccessory float 
+set @TotalBikeAccessory = (select count(*)
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Bikes', 'Accessories'))
+
+--percent of sales order with at least one bike and one accessory
+select 100*(@TotalBikeAccessory / @TotalSalesOrder)
+
+
+--percent of sales orders with at least 1 bike and 2 unique clothing items
+declare @UniqueClothCount float
+declare @TotalSalesOrderCount float
+set @TotalSalesOrderCount = (select count(*) from sales.SalesOrderDetail sod)
+
+set @UniqueClothCount = (
+select count(*) 
+from (
+select sod.SalesOrderID, p.ProductID, psc.ProductCategoryID, pc.Name, count( psc.ProductSubcategoryID) cnt
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Bikes', 'Clothing') 
+group by sod.SalesOrderID, p.ProductID, psc.ProductCategoryID, pc.Name
+--order by sod.SalesOrderID
+) x
+inner join (
+--sales order containing more than one unique clothing item
+select sod.salesorderid, pc.name, count( psc.ProductSubcategoryID) CntOfSalesOrders
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Clothing') 
+group by pc.name, sod.salesorderid
+having count(distinct psc.ProductSubcategoryID) > 1
+) x2
+
+on x.SalesOrderID = x2.SalesOrderID --28317 
+)
+
+select 100* (@UniqueClothCount / @TotalSalesOrderCount)
+
+
+--Part 2 Count Sales Orders by Product Type (Name)
+
+--Create a temp table for each product type with count of sales orders
+drop table #tmpBikes;
+select sod.SalesOrderID, pc.Name, count(pc.Name) SalesOrders
+into #tmpBikes
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Bikes')
+group by pc.Name, sod.SalesOrderID
+
+drop table #tmpAccessories
+select sod.SalesOrderID, pc.Name, count(pc.Name) SalesOrders
+into #tmpAccessories
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Accessories')
+group by pc.Name, sod.SalesOrderID
+
+drop table #tmpComponents
+select sod.SalesOrderID, pc.Name, count(pc.Name) SalesOrders
+into #tmpComponents
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Components')
+group by pc.Name, sod.SalesOrderID
+
+drop table #tmpClothing
+select sod.SalesOrderID, pc.Name, count(pc.Name) SalesOrders
+into #tmpClothing
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] psc
+on psc.ProductSubcategoryID = p.ProductSubcategoryID
+inner join Production.ProductCategory pc
+on psc.ProductCategoryID = pc.ProductCategoryID
+where pc.Name in ('Clothing')
+group by pc.Name, sod.SalesOrderID
+
+--Join sales orders to temp tables to get count of sales orders by product type
+select isnull(a.SalesOrders,0) Accessories, isnull(b.SalesOrders,0) Bikes, isnull(c.SalesOrders,0) Clothing, isnull(co.SalesOrders,0) Components,count(sod.salesorderid) Orders 
+from sales.SalesOrderDetail sod
+left join #tmpAccessories a
+on sod.SalesOrderId = a.SalesOrderID
+left join #tmpBikes b
+on sod.SalesOrderID = b.SalesOrderID
+left join #tmpClothing c
+on sod.SalesOrderID = c.SalesOrderID
+left join #tmpComponents co
+on sod.SalesOrderID = co.SalesOrderID
+group by a.SalesOrders,  b.SalesOrders, c.SalesOrders, co.SalesOrders
+
+--Part 3 Count Customers by product line
+
+--tmp table for product line M
+drop table #ProductM
+select cust.CustomerID CustomerID,p.ProductLine, count(cust.CustomerID) CustomerCount
+into #ProductM
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join sales.SalesOrderHeader soh
+on soh.SalesOrderID = sod.SalesOrderID
+inner join [Sales].[Customer] cust
+on soh.CustomerID = cust.CustomerID
+where p.ProductLine in ('M')
+group by p.ProductLine,cust.CustomerID
+
+--tmp table for product line R
+drop table #ProductR
+select cust.CustomerID CustomerID,p.ProductLine, count(cust.CustomerID) CustomerCount
+into #ProductR
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join sales.SalesOrderHeader soh
+on soh.SalesOrderID = sod.SalesOrderID
+inner join [Sales].[Customer] cust
+on soh.CustomerID = cust.CustomerID
+where p.ProductLine in ('R')
+group by p.ProductLine,cust.CustomerID
+
+--tmp table for product line S
+drop table #ProductS
+select cust.CustomerID CustomerID,p.ProductLine, count(cust.CustomerID) CustomerCount
+into #ProductS
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join sales.SalesOrderHeader soh
+on soh.SalesOrderID = sod.SalesOrderID
+inner join [Sales].[Customer] cust
+on soh.CustomerID = cust.CustomerID
+where p.ProductLine in ('S')
+group by p.ProductLine,cust.CustomerID
+
+--tmp table for product line T
+drop table #ProductT
+select cust.CustomerID CustomerID,p.ProductLine, count(cust.CustomerID) CustomerCount
+into #ProductT
+from [Sales].[SalesOrderDetail] sod
+inner join [Production].[Product] p
+on sod.ProductID = p.ProductID
+inner join sales.SalesOrderHeader soh
+on soh.SalesOrderID = sod.SalesOrderID
+inner join [Sales].[Customer] cust
+on soh.CustomerID = cust.CustomerID
+where p.ProductLine in ('T')
+group by p.ProductLine,cust.CustomerID
+
+
+--Join Cust table to tmp tables
+select isnull(m.CustomerCount,0) M, isnull(r.CustomerCount,0) R, isnull(s.CustomerCount,0) S, isnull(t.CustomerCount,0) T, count(cust.customerID) Customers 
+from sales.Customer cust
+left join #ProductM m
+on cust.CustomerID = m.CustomerID
+left join #ProductR r
+on cust.CustomerID = r.CustomerID
+left join #ProductS s
+on cust.CustomerID = s.CustomerID
+left join #ProductT t
+on cust.CustomerID = t.CustomerID
+group by m.CustomerCount, r.CustomerCount, s.CustomerCount, t.CustomerCount
+order by Customers
+

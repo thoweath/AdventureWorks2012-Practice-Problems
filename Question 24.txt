@@ -1,0 +1,13 @@
+--Tom Weatherall
+--10/11
+--Question 24
+
+--number of customers segmented by email preference
+select 
+case
+	when p.EmailPromotion ='0' then 'Contact does not wish to receive email promotions'
+	when p.EmailPromotion = '1' then 'Contact does wish to receive email promotions from AdventureWorks'
+	when p.EmailPromotion = '2' then 'Contact does wish to receive email promotions from AdventureWorks and select partners'
+	end as EmailPreference, count(*) as [Count] 
+from person.Person p
+group by p.EmailPromotion

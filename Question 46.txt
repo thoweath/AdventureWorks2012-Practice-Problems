@@ -1,0 +1,12 @@
+--Tom Weatherall
+--10/17
+--Question 46
+
+--Employee Bonuses
+select  e.BusinessEntityID, p.FirstName, p.LastName, e.JobTitle, max((ep.Rate * 50)) Bonus
+from HumanResources.Employee e
+inner join person.Person p
+on e.BusinessEntityID = p.BusinessEntityID
+inner join HumanResources.EmployeePayHistory ep
+on e.BusinessEntityID = ep.BusinessEntityID
+group by e.BusinessEntityID, p.FirstName, p.LastName, e.JobTitle

@@ -1,0 +1,22 @@
+--Tom Weatherall
+--10/11
+--Question 23
+
+--list of customers with phone numbers who ordered shorts after July 7, 2008
+select soh.SalesOrderID, soh.OrderDate, p.Name, per.FirstName, per.LastName, phone.PhoneNumber
+from [Sales].[SalesOrderHeader] soh
+inner join [Sales].[SalesOrderDetail] sod
+on soh.SalesOrderID = sod.SalesOrderID
+inner join Production.product p
+on sod.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] ps
+on p.ProductSubcategoryID = ps.ProductSubcategoryID
+inner join sales.customer c
+on c.CustomerID = soh.CustomerID
+inner join person.Person per
+on per.BusinessEntityID = c.CustomerID
+inner join person.PersonPhone phone
+on per.BusinessEntityID = phone.BusinessEntityID
+where ps.ProductSubcategoryID = '22'
+and soh.OrderDate > cast('2008-07-07' as datetime)
+

@@ -1,0 +1,10 @@
+--Tom Weatherall
+--10/10
+--Question 13
+
+
+select right(hr.NationalIDNumber,4) [Last4 NID Number], p.FirstName, p.LastName, hr.JobTitle, hr.VacationHours
+from [HumanResources].[Employee] hr
+inner join person.Person p
+on hr.BusinessEntityID = p.BusinessEntityID
+order by hr.VacationHours desc

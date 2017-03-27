@@ -1,0 +1,23 @@
+--Tom Weatherall
+--10/17
+--Question 36
+
+--Part 1: sales order that utlized Volume discounts
+select soh.salesorderid,soh.OrderDate, sum(soh.subtotal) TotalVolDiscount
+from sales.SalesOrderDetail sod
+inner join [Sales].[SpecialOffer] sp
+on sp.SpecialOfferID = sod.SpecialOfferID
+inner join sales.SalesOrderHeader soh
+on sod.SalesOrderID = soh.SalesOrderID
+where sp.Type like 'Volume%'
+group by soh.salesorderid,soh.OrderDate
+
+--Part 2: Summarize data above by order year
+select year(soh.OrderDate) OrderYear, sum(soh.subtotal) TotalVolDiscount
+from sales.SalesOrderDetail sod
+inner join [Sales].[SpecialOffer] sp
+on sp.SpecialOfferID = sod.SpecialOfferID
+inner join sales.SalesOrderHeader soh
+on sod.SalesOrderID = soh.SalesOrderID
+where sp.Type like 'Volume%'
+group by year(soh.OrderDate)

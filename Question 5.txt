@@ -1,0 +1,122 @@
+--Tom Weatherall
+--10/5/2016
+--Question 5
+
+--Part 1 - Table of expired and non-expired CC transactions
+select soh.CreditCardID CCID, CardType, 
+case
+	when cc.expmonth = '1' then concat('January',' ', cc.ExpYear)
+	when cc.expmonth = '2' then concat('February',' ', cc.ExpYear)
+	when cc.expmonth = '3' then concat('March',' ', cc.ExpYear)
+	when cc.expmonth = '4' then concat('April',' ', cc.ExpYear)
+	when cc.expmonth = '5' then concat('May',' ', cc.ExpYear)
+	when cc.expmonth = '6' then concat('June',' ', cc.ExpYear)
+	when cc.expmonth = '7' then concat('July',' ', cc.ExpYear)
+	when cc.expmonth = '8' then concat('August',' ', cc.ExpYear)
+	when cc.expmonth = '9' then concat('September',' ', cc.ExpYear)
+	when cc.expmonth = '10' then concat('October',' ', cc.ExpYear)
+	when cc.expmonth = '11' then concat('November',' ', cc.ExpYear)
+	when cc.expmonth = '12' then concat('Decemeber',' ', cc.ExpYear)
+end as ExpirationDate,max(soh.OrderDate) LastOrderDate, isnull(ecc.expcount,0) as ExpiredCCOrders, isnull(necc.nonexpcount,0) as NonExpiredCCOrders
+from [Sales].[SalesOrderHeader] soh
+inner join [Sales].[CreditCard] cc
+on soh.CreditCardID = cc.CreditCardID
+left join #tmpExpCC ecc
+on ecc.creditcardid = soh.CreditCardID
+left join #tmpNonExpCC necc
+on necc.creditcardid = soh.CreditCardID 
+group by soh.CreditCardID, cc.CardType, ecc.expcount, necc.nonexpcount,  case
+	when cc.expmonth = '1' then concat('January',' ', cc.ExpYear)
+	when cc.expmonth = '2' then concat('February',' ', cc.ExpYear)
+	when cc.expmonth = '3' then concat('March',' ', cc.ExpYear)
+	when cc.expmonth = '4' then concat('April',' ', cc.ExpYear)
+	when cc.expmonth = '5' then concat('May',' ', cc.ExpYear)
+	when cc.expmonth = '6' then concat('June',' ', cc.ExpYear)
+	when cc.expmonth = '7' then concat('July',' ', cc.ExpYear)
+	when cc.expmonth = '8' then concat('August',' ', cc.ExpYear)
+	when cc.expmonth = '9' then concat('September',' ', cc.ExpYear)
+	when cc.expmonth = '10' then concat('October',' ', cc.ExpYear)
+	when cc.expmonth = '11' then concat('November',' ', cc.ExpYear)
+	when cc.expmonth = '12' then concat('Decemeber',' ', cc.ExpYear)
+end
+order by soh.CreditCardID
+
+
+
+
+--Temp table holding expired CC purchases
+drop table #tmpExpCC
+
+select  soh.CreditCardID,cc.ExpMonth, cc.ExpYear, max(soh.orderdate) orderdate, count(*) ExpCount
+into #tmpExpCC
+from sales.SalesOrderHeader soh
+left join sales.CreditCard cc 
+on cc.CreditCardID = soh.CreditCardID
+where (cc.ExpMonth < month(soh.OrderDate) and cc.ExpYear <= year(soh.orderdate)) or cc.ExpYear < year(soh.orderdate)
+group by soh.CreditCardID, cc.ExpMonth, cc.ExpYear /*, soh.orderdate*/
+--having (cc.ExpMonth < month(soh.OrderDate) and cc.ExpYear <= year(soh.orderdate))
+order by soh.CreditCardID
+
+
+--Temp table holding non-expired CC purchases
+drop table #tmpNonExpCC
+
+select  soh.CreditCardID,cc.ExpMonth, cc.ExpYear, max(soh.orderdate) orderdate, count(*) NonExpCount
+into #tmpNonExpCC
+from sales.SalesOrderHeader soh
+left join sales.CreditCard cc 
+on cc.CreditCardID = soh.CreditCardID
+where (cc.ExpMonth >= month(soh.OrderDate) and cc.ExpYear >= year(soh.orderdate)) or (cc.ExpYear > year(soh.orderdate))
+group by soh.CreditCardID, cc.ExpMonth, cc.ExpYear /*, soh.orderdate*/
+--having (cc.ExpMonth < month(soh.OrderDate) and cc.ExpYear <= year(soh.orderdate))
+order by soh.CreditCardID
+
+/*
+select * 
+from #tmpNonExpCC nx
+inner join #tmpExpCC x
+on nx.CreditCardID = x.CreditCardID
+order by nx.CreditCardID
+*/
+
+
+--Part 2 - Sum up the order totals for Expired and Non-expired CC purchases
+select sum(x.NonExpiredCCOrders) NonExpCCOrderTotal, sum(ExpiredCCOrders) ExpCCOrdersTotal
+from (select cc.CreditCardID CCID, CardType, 
+case
+	when cc.expmonth = '1' then concat('January',' ', cc.ExpYear)
+	when cc.expmonth = '2' then concat('February',' ', cc.ExpYear)
+	when cc.expmonth = '3' then concat('March',' ', cc.ExpYear)
+	when cc.expmonth = '4' then concat('April',' ', cc.ExpYear)
+	when cc.expmonth = '5' then concat('May',' ', cc.ExpYear)
+	when cc.expmonth = '6' then concat('June',' ', cc.ExpYear)
+	when cc.expmonth = '7' then concat('July',' ', cc.ExpYear)
+	when cc.expmonth = '8' then concat('August',' ', cc.ExpYear)
+	when cc.expmonth = '9' then concat('September',' ', cc.ExpYear)
+	when cc.expmonth = '10' then concat('October',' ', cc.ExpYear)
+	when cc.expmonth = '11' then concat('November',' ', cc.ExpYear)
+	when cc.expmonth = '12' then concat('Decemeber',' ', cc.ExpYear)
+end as ExpirationDate, max(soh.OrderDate) LastOrderDate, ecc.expcount as ExpiredCCOrders, necc.nonexpcount as NonExpiredCCOrders
+from [Sales].[SalesOrderHeader] soh
+inner join [Sales].[CreditCard] cc
+on soh.CreditCardID = cc.CreditCardID
+left join #tmpExpCC ecc
+on ecc.creditcardid = cc.CreditCardID
+left join #tmpNonExpCC necc
+on necc.creditcardid = cc.CreditCardID 
+group by cc.CreditCardID, cc.CardType, ecc.expcount, necc.nonexpcount, case
+	when cc.expmonth = '1' then concat('January',' ', cc.ExpYear)
+	when cc.expmonth = '2' then concat('February',' ', cc.ExpYear)
+	when cc.expmonth = '3' then concat('March',' ', cc.ExpYear)
+	when cc.expmonth = '4' then concat('April',' ', cc.ExpYear)
+	when cc.expmonth = '5' then concat('May',' ', cc.ExpYear)
+	when cc.expmonth = '6' then concat('June',' ', cc.ExpYear)
+	when cc.expmonth = '7' then concat('July',' ', cc.ExpYear)
+	when cc.expmonth = '8' then concat('August',' ', cc.ExpYear)
+	when cc.expmonth = '9' then concat('September',' ', cc.ExpYear)
+	when cc.expmonth = '10' then concat('October',' ', cc.ExpYear)
+	when cc.expmonth = '11' then concat('November',' ', cc.ExpYear)
+	when cc.expmonth = '12' then concat('Decemeber',' ', cc.ExpYear)
+end
+) x
+

@@ -1,0 +1,17 @@
+--Tom Weatherall
+--10/5/2016
+--Question 6
+
+
+select p.ProductID, p.Name, p.Color, p.ListPrice, pinv.TotalQty 
+from production.product p
+inner join  (SELECT
+			ProductID
+			,TotalQty = SUM(Quantity)
+			FROM AdventureWorks2012.Production.ProductInventory
+			GROUP BY ProductID) pinv
+on p.ProductID = pinv.ProductID
+where pinv.TotalQty >= cast('150' as smallint)
+and p.ListPrice > = cast('1500.00' as money)
+and p.FinishedGoodsFlag = 1
+and p.SellEndDate is null 

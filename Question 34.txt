@@ -1,0 +1,14 @@
+--Tom Weatherall
+--10/13
+--Question 34
+
+--Revenue by state for 2006
+select s.Name, sum(soh.TotalDue) Revenue
+from sales.SalesOrderHeader soh
+inner join [Person].[Address] p
+on soh.ShipToAddressID = p.AddressID
+inner join [Person].[StateProvince] s
+on s.StateProvinceID = p.StateProvinceID
+where year(soh.OrderDate) = '2006'
+group by s.Name
+order by Revenue desc

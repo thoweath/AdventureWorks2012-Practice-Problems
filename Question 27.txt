@@ -1,0 +1,12 @@
+--Tom Weatherall
+--10/11
+--Question 27
+
+
+--# of work orders by product
+select w.productID, p.Name, sum(w.OrderQty) Qty
+from [Production].[WorkOrder] w
+inner join Production.Product p
+on w.ProductID = p.ProductID
+group by w.productID, p.Name
+order by qty desc

@@ -1,0 +1,49 @@
+--Tom Weatherall
+--10/17
+--Question 39
+
+--Part 1: Create temp table with each salesperson's percent to quota for each quarter
+select x1.BusinessEntityID, x1.QuotaDate, x.yr [Year], x1.SalesQuarter, x1.SalesQuota SalesQuotaByQtr, 
+x.SalesTotal SalesTotalByQtr, (x.SalesTotal/x1.SalesQuota) PercentToQuota
+into #tmpPercentToQuota
+from(
+select h.BusinessEntityID, h.quotadate, h.salesquota, year(h.quotadate) yr,
+case	
+	when month(h.QuotaDate) = 7 then 'Q1'
+	when month(h.QuotaDate) = 10 then 'Q2'
+	when month(h.QuotaDate) = 1 then 'Q3'
+	when month(h.QuotaDate) = 4 then 'Q4'
+end as SalesQuarter
+from sales.SalesPersonQuotaHistory h) x1
+inner join 
+(select soh.SalesPersonID, SUM(soh.subtotal) SalesTotal, year(soh.orderdate) Yr,
+case	
+	when month(soh.OrderDate) >= 7 and month(soh.OrderDate) <= 9 then 'Q1'
+	when month(soh.OrderDate) >= 10 and month(soh.OrderDate) <= 12 then 'Q2'
+	when month(soh.OrderDate) >= 1 and month(soh.OrderDate) <= 3 then 'Q3'
+	when month(soh.OrderDate) >= 4 and month(soh.OrderDate) <= 6 then 'Q4'
+end as SalesQuarter
+from sales.SalesOrderHeader soh
+where soh.OnlineOrderFlag = 0
+group by soh.SalesPersonID, year(soh.orderdate),
+case	
+	when month(soh.OrderDate) >= 7 and month(soh.OrderDate) <= 9 then 'Q1'
+	when month(soh.OrderDate) >= 10 and month(soh.OrderDate) <= 12 then 'Q2'
+	when month(soh.OrderDate) >= 1 and month(soh.OrderDate) <= 3 then 'Q3'
+	when month(soh.OrderDate) >= 4 and month(soh.OrderDate) <= 6 then 'Q4'
+end
+) x
+on x1.BusinessEntityID = x.SalesPersonID
+and x1.yr = x.Yr
+and x1.SalesQuarter = x.SalesQuarter
+--where h.BusinessEntityID = '274'
+order by x1.BusinessEntityID,x1.QuotaDate
+
+--Part 2: Summarize above tmp table by salesperson and year
+select t.BusinessEntityID,t.Year,sum(t.SalesTotalByQtr) TotalSales, sum(t.SalesQuotaByQtr) TotalQuota,
+(sum(t.SalesTotalByQtr)/sum(t.SalesQuotaByQtr)) TotalPercentToQuota, avg(t.PercentToQuota) AvgQtrlyPercToQuota
+from #tmpPercentToQuota t
+group by t.BusinessEntityID, t.Year
+order by t.BusinessEntityID, t.Year
+
+

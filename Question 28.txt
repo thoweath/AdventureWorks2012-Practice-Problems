@@ -1,0 +1,43 @@
+--Tom Weatherall
+--10/11
+--Question 28
+
+
+--Part 1: calculate revenue per day for May and project total revenue at month end
+drop table #tmpTotalRev
+select distinct sum(soh.subtotal) over (order by soh.orderdate asc) as TotalRevenue, day(soh.OrderDate) [Day]
+into #tmpTotalRev
+from sales.SalesOrderHeader soh
+where soh.OrderDate >= cast('2008-05-01' as datetime) and soh.OrderDate <= cast('2008-05-24' as datetime)
+--group by soh.OrderDate, soh.subtotal
+order by day(soh.OrderDate)
+
+--Projected Rev for all of May (May 1-24 date range)
+select day(soh.orderdate) DaysInMonth, (t.totalrevenue /cast(day(soh.orderdate) as int)) RevPerDay, t.totalrevenue, 
+(t.totalrevenue)+(t.totalrevenue /cast(day(soh.orderdate) as int))*(31-cast(day(soh.orderdate) as int)) ProjectedRevForMay
+from sales.SalesOrderHeader soh
+inner join #tmpTotalRev t
+on day(soh.OrderDate) = t.day
+where soh.OrderDate >= cast('2008-05-01' as datetime) and soh.OrderDate <= cast('2008-05-24' as datetime)
+group by soh.OrderDate, t.TotalRevenue
+order by soh.OrderDate
+
+
+--Part 2: calculate actual revenue for all of May
+--Actual Revenue for May temp table
+drop table #tmpTotalRev2
+select distinct sum(soh.subtotal) over (order by soh.orderdate asc) as TotalRevenue, day(soh.OrderDate) [Day]
+into #tmpTotalRev2
+from sales.SalesOrderHeader soh
+where soh.OrderDate >= cast('2008-05-01' as datetime) and soh.OrderDate <= cast('2008-05-31' as datetime)
+--group by soh.OrderDate, soh.subtotal
+order by day(soh.OrderDate)
+
+select day(soh.orderdate) DaysInMonth, (t.totalrevenue /cast(day(soh.orderdate) as int)) RevPerDay, t.totalrevenue, 
+(t.totalrevenue)+(t.totalrevenue /cast(day(soh.orderdate) as int))*(31-cast(day(soh.orderdate) as int)) ProjectedRevForMay
+from sales.SalesOrderHeader soh
+inner join #tmpTotalRev2 t
+on day(soh.OrderDate) = t.day
+where soh.OrderDate >= cast('2008-05-01' as datetime) and soh.OrderDate <= cast('2008-05-31' as datetime)
+group by soh.OrderDate, t.TotalRevenue
+order by soh.OrderDate

@@ -1,0 +1,20 @@
+--Tom Weatherall
+--10/10
+--Question 12
+
+--Used Rollup function to calc total distinct products and total quantity for all locations.The 'NULL' in LocationID means 'all locations'
+drop view Question12RollupView
+GO
+create view Question12RollupView as
+select locationID, count(distinct pinv.productID) DistinctProducts, sum(pinv.Quantity) Quantity,
+case 
+	when (grouping(pinv.locationID) =1) then 'All Locations' else concat('LocationID ',cast(LocationID as varchar))
+end as [DistProd Rollup],
+case
+	when (grouping(pinv.locationid) = 1) then 'All Locations' else concat('LocationID ',cast(LocationID as varchar))
+end as [QuantityRollup]
+from Production.ProductInventory pinv
+group by pinv.locationID with rollup
+GO
+
+select * from Question12RollupView

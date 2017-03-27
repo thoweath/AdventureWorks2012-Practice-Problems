@@ -1,0 +1,83 @@
+--Tom Weatherall
+--10/6
+--Question 8
+
+
+--temp table for salesperon revenue by territory
+drop table #tmpSalesPersonByTerritory
+
+select soh.SalesPersonID,p.LastName Lastname, st.Name, sum(soh.SubTotal) [2008Revenue] 
+into #tmpSalesPersonByTerritory
+from person.person p
+inner join sales.salesorderheader soh
+on p.BusinessEntityID = soh.SalesPersonID
+inner join sales.SalesTerritoryHistory sth
+on sth.BusinessEntityID = soh.SalesPersonID
+inner join sales.SalesTerritory st
+on st.TerritoryID = sth.TerritoryID
+where st.Name in ('Northwest','Southwest','Canada')
+and CONVERT(varchar(10), soh.OrderDate, 20) between '2007-07-01' and '2008-06-30'
+and sth.EndDate is null
+group by soh.SalesPersonID, st.Name, p.LastName
+order by st.Name
+
+--alter #tmpSalesPersonByTerritory to add Salary column
+alter table #tmpSalesPersonByTerritory add Salary money
+
+--updatevtmpSalesPersonByTerritory Salary column with values from #tmpSalesPersonSalary table
+update #tmpSalesPersonByTerritory
+set Salary = sps.salary
+from #tmpSalesPersonByTerritory spt
+inner join #tmpSalesPersonSalary sps
+on spt.SalesPersonID = sps.salespersonid
+
+--new tmpSalesPersonByTerritory table with updated Salary column
+select * from #tmpSalesPersonByTerritory
+
+--Segment updated tmpSalesPersonByTerritory table by region to create 3 new tmp tables
+select * 
+into #tmpNorthwestSales
+from #tmpSalesPersonByTerritory spt
+where spt.Name = 'Northwest'
+
+select * 
+into #tmpSouthwestSales
+from #tmpSalesPersonByTerritory spt
+where spt.Name = 'Southwest'
+
+select * 
+into #tmpCanadaSales
+from #tmpSalesPersonByTerritory spt
+where spt.Name = 'Canada'
+
+
+--CROSS JOIN 3 tmp region tables and find best combination
+select nw.salespersonid, sum(nw.[2008Revenue]) NWRev,sw.SalesPersonID, sum(sw.[2008Revenue]) SWRev,ca.SalesPersonID, sum(ca.[2008Revenue]) CARev, (nw.[2008Revenue] + sw.[2008Revenue] + ca.[2008Revenue]) AggRev
+from #tmpNorthwestSales nw
+cross join #tmpSouthwestSales sw
+cross join #tmpCanadaSales ca
+where (nw.salary + sw.salary + ca.salary) < cast('210000' as money)
+group by nw.SalesPersonID, sw.SalesPersonID, ca.SalesPersonID, nw.[2008Revenue], sw.[2008Revenue], ca.[2008Revenue]
+order by AggRev desc
+
+
+
+
+
+
+--Create Salesperson salary table
+drop table #tmpSalesPersonSalary
+
+create table #tmpSalesPersonSalary
+(
+SalesPersonID int,
+Salary money
+);
+
+insert into #tmpSalesPersonSalary (SalesPersonID, Salary) values (cast('278' as int),cast('60000' as money))
+insert into #tmpSalesPersonSalary (SalesPersonID, Salary) values (cast('289' as int),cast('79500' as money))
+insert into #tmpSalesPersonSalary (SalesPersonID, Salary) values (cast('283' as int),cast('59500' as money))
+insert into #tmpSalesPersonSalary (SalesPersonID, Salary) values (cast('284' as int),cast('56000' as money)) 
+insert into #tmpSalesPersonSalary (SalesPersonID, Salary) values (cast('281' as int),cast('68000' as money))
+insert into #tmpSalesPersonSalary (SalesPersonID, Salary) values (cast('276' as int),cast('80000' as money))
+

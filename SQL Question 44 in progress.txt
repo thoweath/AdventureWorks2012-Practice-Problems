@@ -1,0 +1,59 @@
+
+--Potentially another way of displaying this
+--Daily wage for each year by employee
+select w.BusinessEntityID, 
+max(w.[2005Rate]) [2005Salary], 
+iif( max(w.[2006Rate]) = 0, max(w.[2005Rate]), max(w.[2006Rate])) [2006Salary],
+iif( max(w.[2007Rate]) = 0, iif( max(w.[2006Rate]) = 0, max(w.[2005Rate]),  max(w.[2006Rate])), max(w.[2007Rate])) [2007Salary],
+iif( max(w.[2008Rate]) = 0, iif( max(w.[2007Rate]) = 0, iif(max(w.[2006Rate]) = 0, max(w.[2005Rate]), max(w.[2006Rate])), max(w.[2007Rate])), max(w.[2008Rate])) [2008Salary]
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+
+
+SELECT *
+	,BusinessEntityOrder =	ROW_NUMBER () OVER (PARTITION BY BusinessEntityID 
+												ORDER BY RateChangeDate)
+
+	,RateEndDate =			CONVERT (DATETIME, NULL)
+	,BusinessDays =			CONVERT (INT, NULL)
+INTO #EmployeePayHistory
+FROM HumanResources.EmployeePayHistory 
+
+UPDATE N1 
+	SET	RateEndDate	=		(SELECT TOP 1 RateChangeDate
+								FROM #EmployeePayHistory X1
+								WHERE N1.BusinessEntityID = X1.BusinessEntityID
+									AND X1.BusinessEntityOrder = N1.BusinessEntityOrder + 1         
+								ORDER BY X1.RateChangeDate)
+FROM #EmployeePayHistory N1
+
+
+UPDATE N1 
+	SET BusinessDays =		(SELECT COUNT (*)
+								FROM dbo.Calendar c
+								WHERE c.[Date] BETWEEN N1.RateChangeDate 
+									AND ISNULL (N1.RateEndDate, '2009-01-01')
+								AND c.IsBusinessDay = 1)
+FROM #EmployeePayHistory N1
+
+
+SELECT *
+	,DailyPay = Rate * 8
+INTO #EmployeePayCalendar
+FROM #EmployeePayHistory N1
+INNER JOIN dbo.Calendar N2 ON 1 = 1
+	AND N2.[Date] >= N1.RateChangeDate 
+	AND N2.[Date] < ISNULL (N1.RateEndDate, '2009-01-01')                               
+	AND N2.IsBusinessDay = 1
+
+
+
+SELECT
+	BusinessEntityID
+	,WorkingYear =	[Year]
+	,TotalPay =		SUM (DailyPay)
+FROM #EmployeePayCalendar
+WHERE [Year] BETWEEN 2005 AND 2008
+GROUP BY BusinessEntityID, [Year]
+ORDER BY BusinessEntityID, [Year]

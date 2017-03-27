@@ -1,0 +1,16 @@
+--Tom Weatherall
+--10/19
+--Question 51
+
+--Part 1: Historical excess inventory special offer discounts
+select s.SpecialOfferID, s.type, s.Description, s.Category, s.StartDate, s.EndDate, s.DiscountPct
+from sales.SpecialOffer s
+where s.Type = 'Excess Inventory'
+
+--Part 2: same as above plus count of sales orders
+select s.SpecialOfferID, s.type, s.Description, s.Category, s.StartDate, s.EndDate, s.DiscountPct, count(sod.SalesOrderID) SalesOrders
+from sales.SalesOrderDetail sod
+right join sales.SpecialOffer s
+on sod.SpecialOfferID = s.SpecialOfferID
+where s.Type = 'Excess Inventory'
+group by s.SpecialOfferID, s.type, s.Description, s.Category, s.StartDate, s.EndDate, s.DiscountPct

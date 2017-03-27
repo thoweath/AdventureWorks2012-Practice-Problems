@@ -1,0 +1,16 @@
+--Tom Weatherall
+--10/11
+--Question 18
+
+--Ranking of product variable cost, with a ranking of '1' exhibiting the product with the greatest variability 
+select p.ProductID, p.Name, ps.ProductSubcategoryID, min(pc.StandardCost) minCost, 
+max(pc.StandardCost) maxCost, 
+(max(pc.StandardCost) - min(pc.StandardCost)) variableCost,
+rank() over(order by (max(pc.StandardCost) - min(pc.StandardCost)) desc) as VarCostRanking
+from [Production].[ProductCostHistory] pc
+inner join [Production].[Product] p
+on pc.ProductID = p.ProductID
+inner join [Production].[ProductSubcategory] ps
+on p.ProductSubcategoryID = ps.ProductSubcategoryID
+group by p.ProductID, p.Name, ps.ProductSubcategoryID
+order by VarCostRanking asc

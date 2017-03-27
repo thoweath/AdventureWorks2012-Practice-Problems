@@ -1,0 +1,13 @@
+--Tom Weatherall
+--10/10
+--Question 15
+
+
+select pm.ProductModelID,pm.Name,pd.Description, c.Name
+from [Production].[ProductModel] pm
+inner join [Production].[ProductModelProductDescriptionCulture] pc
+on pm.ProductModelID = pc.ProductModelID
+inner join [Production].[Culture] c
+on pc.CultureID = c.CultureID
+inner join [Production].[ProductDescription] pd
+on pc.ProductDescriptionID = pd.ProductDescriptionID

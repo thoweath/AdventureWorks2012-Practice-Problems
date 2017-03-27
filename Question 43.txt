@@ -1,0 +1,83 @@
+--Tom Weatherall
+--10/17
+--Question 43
+
+--Part 1: Create calendar table for 1/1/1990 - 1/1/2015
+
+
+--Declare variables for creating calendar from 1/1/1990 - 1/1/2015
+declare @StartDate date = '19900101', @NumberOfYears int = 25;
+
+set datefirst 7;
+set dateformat mdy;
+set language us_english;
+
+
+declare @CutoffDate date = dateadd(year, @NumberOfYears, @StartDate);
+
+--Create temp table for calculating values in final table
+--drop table #tmpCal
+create table #tmpCal
+(
+[date] date primary key,
+[day] as datepart(day,date),
+[month] as datepart(month, date),
+[MonthName] as datename(month, date),
+[week] as datepart(week, date),
+ISOweek as datepart(ISO_week, date),
+[DayOfWeek] as datepart(weekday, date),
+[year] as datepart(year, date)
+);
+
+--insert values inot temp table for calculation
+insert #tmpCal([date])
+select d
+from
+(
+	select d = dateadd(day,rn-1, @startdate)
+	from
+	(
+		select top (datediff(day,@startdate,dateadd(day,1,@cutoffDate)))
+		rn = ROW_NUMBER() over (order by s1.object_id)
+		from sys.all_objects s1
+		cross join sys.all_objects s2
+		order by s1.object_id
+	) x
+) y
+
+--Create final calendar table
+--drop table Calendar
+CREATE TABLE Calendar
+(
+DateID int not null identity(1,1) primary key,
+[Date] date not null,
+[Day] tinyint not null,
+[Weekday] tinyint not null,
+[WeekdayName] varchar(10) not null,
+IsWeekend bit not null,
+IsBusinessDay bit not null,
+[Month] tinyint not null,
+[MonthName] varchar(10) not null,
+[Year] int not null
+);
+
+--Insert calculations from temp table into final table
+insert Calendar with (TABLOCKX)
+select 
+	[Date] = [date],
+	[Day]  = convert(tinyint, [day]),
+	[Weekday] = convert(tinyint, [DayOfWeek]),
+	[WeekdayName] = convert(varchar(10), datename(weekday,[date])),
+	[IsWeekend] = convert(bit, case when [DayOfWeek] in (1,7) then 1 else 0 end),
+	[IsBusinessDay] = convert(bit, case when [DayOfWeek] in (2,3,4,5,6) then 1 else 0 end),
+	[Month] = convert(tinyint, [month]),
+	[MonthName] = convert(varchar(10), [MonthName]),
+	[Year] = [year]
+from #tmpCal
+OPTION (MAXDOP 1);
+
+--Part 2: Summarize number of working days per year using Calendar table
+select c.Year, sum(cast(c.IsBusinessDay as int)) BusinessDaysInYear
+from Calendar c
+group by c.Year
+order by c.Year

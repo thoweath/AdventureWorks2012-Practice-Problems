@@ -1,0 +1,53 @@
+--Tom Weatherall
+--10/17
+--Question 40
+
+--Count number of orders for each Revenue range and sort by revenue range
+select
+case 
+	when soh.TotalDue >= cast('0' as money) and soh.TotalDue <= cast('100' as money) then 1
+	when soh.TotalDue > cast('100' as money) and soh.TotalDue <= cast('500' as money) then 2
+	when soh.TotalDue > cast('500' as money) and soh.TotalDue <= cast('1000' as money) then 3
+	when soh.TotalDue > cast('1000' as money) and soh.TotalDue <= cast('2500' as money) then 4
+	when soh.TotalDue > cast('2500' as money) and soh.TotalDue <= cast('5000' as money) then 5
+	when soh.TotalDue > cast('5000' as money) and soh.TotalDue <= cast('10000' as money) then 6
+	when soh.TotalDue > cast('10000' as money) and soh.TotalDue <= cast('50000' as money) then 7
+	when soh.TotalDue > cast('50000' as money) and soh.TotalDue <= cast('100000' as money) then 8
+	when soh.TotalDue > cast('100000' as money) then 9
+end as SortID,
+case 
+	when soh.TotalDue >= cast('0' as money) and soh.TotalDue <= cast('100' as money) then '$0-$100'
+	when soh.TotalDue > cast('100' as money) and soh.TotalDue <= cast('500' as money) then '$100-$500'
+	when soh.TotalDue > cast('500' as money) and soh.TotalDue <= cast('1000' as money) then '$500-$1,000'
+	when soh.TotalDue > cast('1000' as money) and soh.TotalDue <= cast('2500' as money) then '$1000-$2,500'
+	when soh.TotalDue > cast('2500' as money) and soh.TotalDue <= cast('5000' as money) then '$2,500-$5,000'
+	when soh.TotalDue > cast('5000' as money) and soh.TotalDue <= cast('10000' as money) then '$5,000-$10,000'
+	when soh.TotalDue > cast('10000' as money) and soh.TotalDue <= cast('50000' as money) then '$10,000-$50,000'
+	when soh.TotalDue > cast('50000' as money) and soh.TotalDue <= cast('100000' as money) then '$50,000-$100,000'
+	when soh.TotalDue > cast('100000' as money) then '>$100,000'
+end as RevRange, count(*) NumberOfOrders
+from sales.SalesOrderHeader soh
+group by 
+case 
+	when soh.TotalDue >= cast('0' as money) and soh.TotalDue <= cast('100' as money) then '$0-$100'
+	when soh.TotalDue > cast('100' as money) and soh.TotalDue <= cast('500' as money) then '$100-$500'
+	when soh.TotalDue > cast('500' as money) and soh.TotalDue <= cast('1000' as money) then '$500-$1,000'
+	when soh.TotalDue > cast('1000' as money) and soh.TotalDue <= cast('2500' as money) then '$1000-$2,500'
+	when soh.TotalDue > cast('2500' as money) and soh.TotalDue <= cast('5000' as money) then '$2,500-$5,000'
+	when soh.TotalDue > cast('5000' as money) and soh.TotalDue <= cast('10000' as money) then '$5,000-$10,000'
+	when soh.TotalDue > cast('10000' as money) and soh.TotalDue <= cast('50000' as money) then '$10,000-$50,000'
+	when soh.TotalDue > cast('50000' as money) and soh.TotalDue <= cast('100000' as money) then '$50,000-$100,000'
+	when soh.TotalDue > cast('100000' as money) then '>$100,000'
+end,
+case 
+	when soh.TotalDue >= cast('0' as money) and soh.TotalDue <= cast('100' as money) then 1
+	when soh.TotalDue > cast('100' as money) and soh.TotalDue <= cast('500' as money) then 2
+	when soh.TotalDue > cast('500' as money) and soh.TotalDue <= cast('1000' as money) then 3
+	when soh.TotalDue > cast('1000' as money) and soh.TotalDue <= cast('2500' as money) then 4
+	when soh.TotalDue > cast('2500' as money) and soh.TotalDue <= cast('5000' as money) then 5
+	when soh.TotalDue > cast('5000' as money) and soh.TotalDue <= cast('10000' as money) then 6
+	when soh.TotalDue > cast('10000' as money) and soh.TotalDue <= cast('50000' as money) then 7
+	when soh.TotalDue > cast('50000' as money) and soh.TotalDue <= cast('100000' as money) then 8
+	when soh.TotalDue > cast('100000' as money) then 9
+end
+order by SortID

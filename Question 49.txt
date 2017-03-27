@@ -1,0 +1,23 @@
+--Tom Weatherall
+--10/17
+--Question 49
+
+--Top 10 percent scrapped prods where percent scrapped > .03
+drop view top10percentscrapped
+GO
+
+CREATE VIEW Top10PercentScrapped
+AS
+select top 10 percent w.WorkOrderID, w.DueDate, p.Name, s.Name [ScrapReason], w.ScrappedQty, w.OrderQty, 
+(cast(w.ScrappedQty as float)/cast(w.OrderQty as float)) [%Scrapped]
+from Production.WorkOrder w
+inner join Production.ScrapReason s
+on w.ScrapReasonID = s.ScrapReasonID
+inner join Production.Product p
+on p.ProductID = w.ProductID
+where (cast(w.ScrappedQty as float)/cast(w.OrderQty as float)) > .03
+order by w.DueDate desc
+GO
+
+select * from Top10PercentScrapped
+

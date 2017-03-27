@@ -1,0 +1,16 @@
+--Tom Weatherall
+--10/17
+--Question 48
+
+--Percent change in sales quotas from Q1 2006 to Q4 2007
+select p.BusinessEntityID, min(h.SalesQuota) [2006SalesQuota], 
+max(h.salesquota) [2007SalesQuota], (min(h.SalesQuota)/max(h.salesquota)) [%Change]
+from sales.SalesPerson sp
+inner join sales.SalesPersonQuotaHistory h
+on sp.BusinessEntityID = h.BusinessEntityID
+inner join person.Person p
+on sp.BusinessEntityID = p.BusinessEntityID
+where year(h.QuotaDate) >= '2006' 
+and year(h.QuotaDate) <= '2007'
+and (h.QuotaDate = '2007-07-01' or h.QuotaDate = '2007-04-01') --only emps who had sales quotas in Q1 or Q4 2007
+group by p.BusinessEntityID

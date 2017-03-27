@@ -1,0 +1,18 @@
+--Tom Weatherall
+--10/7
+--Question 10
+
+--Used OVER() and PARTITION BY clauses to segment subtotals by year, then ranked them within each year ASC and DESC to find the median for each year
+select year(soh.orderdate) [OrderYear], min(soh.subtotal) minSubTotal, max(soh.subtotal) maxSubTotal,
+avg(soh.subtotal) averageSubTotal, avg(x.subtotal) medianSubTotal
+from sales.SalesOrderHeader soh
+left join (
+select subtotal, year(orderdate) yr, customerID,orderdate,salesorderid,
+ROW_NUMBER() over (partition by year(orderdate) order by subtotal asc,salesorderid asc) as RowAsc,
+ROW_NUMBER() over (partition by year(orderdate) order by subtotal desc,salesorderid desc) as RowDesc
+from sales.SalesOrderHeader soh
+) x
+on year(soh.orderdate) = x.yr
+where x.RowAsc in (x.RowDesc, x.RowDesc-1, x.RowDesc+1)
+group by year(soh.orderdate)
+order by [OrderYear]

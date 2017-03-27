@@ -1,0 +1,10 @@
+--Tom Weatherall
+--10/11
+--Question 29
+
+--Parse domain and username from loginID field
+select e.BusinessEntityID, e.LoginID, left(e.LoginID,
+ CHARINDEX('\',e.loginid)-1) Domain,
+ right(e.LoginID,len(e.LoginID)-CHARINDEX('\',e.loginid)) Username
+from HumanResources.Employee e
+

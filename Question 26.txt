@@ -1,0 +1,9 @@
+--Tom Weatherall
+--10/11
+--Question 26
+
+--Sales person ranked by commissionPct
+select sp.BusinessEntityID, p.lastname, sp.commissionpct, sp.bonus, ROW_NUMBER() over(order by commissionpct desc, bonus desc) as Ranking
+from sales.SalesPerson sp
+inner join person.Person p
+on sp.BusinessEntityID = p. BusinessEntityID

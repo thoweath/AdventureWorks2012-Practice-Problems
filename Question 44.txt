@@ -1,0 +1,106 @@
+--Tom Weatherall
+--10/19
+--Question 44
+
+--Create temp table with daily wage for each employee (to be used with DaysInYear temp table to calculate annual salary)
+drop table #tmpDailyWage
+select p.BusinessEntityID, (p.Rate * 8) DailyWage,-- p.ratechangedate,
+case 
+	when year(p.RateChangeDate) <= '2005' then p.Rate else 0
+end as [2005Rate],
+case 
+	when year(p.RateChangeDate) = '2006' then p.Rate else 0
+end as [2006Rate],
+case
+	when year(p.RateChangeDate) = '2007' then p.Rate else 0
+end as [2007Rate],
+case
+	when year(p.RateChangeDate) = '2008' then p.Rate else 0
+end as [2008Rate]
+into #tmpDailyWage
+from HumanResources.EmployeePayHistory p
+
+
+--Create temp table showing how many days are in each year (to be used when calculating annual salary)
+drop table #tmpDaysInYear
+select c.Year, sum(cast(c.IsBusinessDay as int)) DaysInYear
+--into #tmpDaysInYear
+from dbo.Calendar c
+where c.Year in ('2005','2006','2007','2008')
+group by c.Year
+
+--Create tmp tables of daily wages for each employee for years 2005-2008
+--2005 daily wages
+--drop table #tmp2005DailyWages
+select w.BusinessEntityID, 
+max(w.[2005Rate]) * 8 [2005Salary], '2005' [Year]
+into #tmp2005DailyWages
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+--2006 daily wages
+--drop table #tmp2006DailyWages
+select w.BusinessEntityID, 
+iif( max(w.[2006Rate]) = 0, max(w.[2005Rate]) * 8, max(w.[2006Rate]) * 8) [2006Salary],
+'2006' [Year]
+into #tmp2006DailyWages
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+--2007 daily wages
+--drop table #tmp2007DailyWages
+select w.BusinessEntityID, 
+iif( max(w.[2007Rate]) = 0, iif( max(w.[2006Rate]) = 0, max(w.[2005Rate]) * 8,  max(w.[2006Rate]) * 8), max(w.[2007Rate]) * 8) [2007Salary],
+'2007' [Year]
+into #tmp2007DailyWages
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+--2008 daily wages
+--drop table #tmp2008DailyWages
+select w.BusinessEntityID, 
+iif( max(w.[2008Rate]) = 0, iif( max(w.[2007Rate]) = 0, iif(max(w.[2006Rate]) = 0, max(w.[2005Rate]) * 8, max(w.[2006Rate]) * 8), max(w.[2007Rate]) * 8), max(w.[2008Rate]) * 8) [2008Salary],
+'2008' [Year]
+into #tmp2008DailyWages
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+
+--FINAL OUTPUT	
+--Combine daily wages for 2005-2008 tmp tables with number of days in year tmp table to produce Annual Salary for each employee
+select w5.businessentityid, (w5.[2005Salary] * d5.DaysInYear) [2005AnnualSalary], 
+(w6.[2006Salary] * d6.DaysInYear) [2006AnnualSalary],
+(w7.[2007Salary] * d7.DaysInYear) [2007AnnualSalary],
+(w8.[2008Salary] * d8.DaysInYear) [2008AnnualSalary]
+from #tmp2005DailyWages w5
+inner join #tmp2006DailyWages w6
+on w5.businessentityid = w6.businessentityid
+inner join #tmp2007DailyWages w7
+on w6.businessentityid = w7.businessentityid 
+inner join #tmp2008DailyWages w8
+on w7.businessentityid = w8.businessentityid
+inner join #tmpDaysInYear d6
+on w6.Year = d6.Year 
+inner join #tmpDaysInYear d7
+on w7.Year = d7.Year
+inner join #tmpDaysInYear d8
+on w8.Year = d8.Year
+inner join #tmpDaysInYear d5
+on w5.Year = d5.Year
+
+
+
+
+
+
+--Potentially another way of displaying this
+--Daily wage for each year by employee
+select w.BusinessEntityID, 
+max(w.[2005Rate]) [2005Salary], 
+iif( max(w.[2006Rate]) = 0, max(w.[2005Rate]), max(w.[2006Rate])) [2006Salary],
+iif( max(w.[2007Rate]) = 0, iif( max(w.[2006Rate]) = 0, max(w.[2005Rate]),  max(w.[2006Rate])), max(w.[2007Rate])) [2007Salary],
+iif( max(w.[2008Rate]) = 0, iif( max(w.[2007Rate]) = 0, iif(max(w.[2006Rate]) = 0, max(w.[2005Rate]), max(w.[2006Rate])), max(w.[2007Rate])), max(w.[2008Rate])) [2008Salary]
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+

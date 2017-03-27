@@ -1,0 +1,19 @@
+--Tom Weatherall
+--10/17
+--Question 41
+
+--Count number of email domains with adventure-works.com domain, number witout adventure-works.com domain, and total number of emails
+select p.PersonType,
+sum(case
+	when e.EmailAddress like '%adventure-works.com%' then 1 else 0
+end) AdvWrksDomain,
+sum(case
+	when e.EmailAddress not like '%adventure-works.com%' then 1 else 0
+end) NonAdvWrksDomain,
+case
+	when (grouping(p.PersonType) = 1) then count(*) else count(*) end as TotalEmail
+from person.Person p
+inner join person.EmailAddress e
+on p.BusinessEntityID = e.BusinessEntityID
+group by p.PersonType with rollup
+order by TotalEmail desc

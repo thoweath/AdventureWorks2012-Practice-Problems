@@ -1,0 +1,14 @@
+--Tom Weatherall
+--10/17
+--Question 47
+
+select ed.BusinessEntityID,
+case
+	when p.Suffix is null then CONCAT(p.firstname,' ',p.lastname) else CONCAT(p.FirstName,' ', p.LastName,', ', p.Suffix) 
+end as Name, d.Name
+from person.person p
+inner join HumanResources.EmployeeDepartmentHistory ed
+on ed.BusinessEntityID = p.BusinessEntityID
+inner join HumanResources.Department d
+on ed.DepartmentID = d.DepartmentID
+order by d.Name, p.LastName

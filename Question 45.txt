@@ -1,0 +1,68 @@
+--Tom Weatherall
+--10/19
+--Question 45
+
+--Create days in year tmp table
+select c.Year, sum(cast(c.IsBusinessDay as int)) DaysInYear
+into #tmpDaysInYear
+from dbo.Calendar c
+where c.Year in ('2005','2006','2007','2008')
+group by c.Year
+
+
+--Create Daily wage table
+--drop table #tmpDailyWage
+select p.BusinessEntityID, (p.Rate * 8) DailyWage,-- p.ratechangedate,
+case 
+	when year(p.RateChangeDate) <= '2005' then p.Rate else 0
+end as [2005Rate],
+case 
+	when year(p.RateChangeDate) = '2006' then p.Rate else 0
+end as [2006Rate],
+case
+	when year(p.RateChangeDate) = '2007' then p.Rate else 0
+end as [2007Rate],
+case
+	when year(p.RateChangeDate) = '2008' then p.Rate else 0
+end as [2008Rate]
+into #tmpDailyWage
+from HumanResources.EmployeePayHistory p
+
+
+--2008 daily wages
+--drop table #tmp2008DailyWages
+select w.BusinessEntityID, 
+iif( max(w.[2008Rate]) = 0, iif( max(w.[2007Rate]) = 0, iif(max(w.[2006Rate] * 8) = 0, max(w.[2005Rate] * 8), max(w.[2006Rate]) * 8), max(w.[2007Rate]) * 8), max(w.[2008Rate]) * 8) [2008Salary],
+'2008' [Year]
+into #tmp2008DailyWages
+from #tmpDailyWage w
+group by w.BusinessEntityID
+
+
+--Annual Salary for employees in 2008
+--drop table #tmp2008EmpAnnualSalary
+select w8.businessentityid,
+(w8.[2008Salary] * d8.DaysInYear) [2008AnnualSalary]
+into #tmp2008EmpAnnualSalary
+from #tmp2008DailyWages w8
+inner join #tmpDaysInYear d8
+on w8.Year = d8.Year
+
+--FINAL OUTPUT
+--Min,Max,Avg salary stats by department in 2008
+select d.DepartmentID, d.Name, 
+min(s.[2008AnnualSalary]) MinDeptSalary, 
+max(s.[2008AnnualSalary]) MaxDeptSalary, 
+avg(s.[2008AnnualSalary]) AvgDeptSalary, 
+count(*) NumberOfEmployees
+from HumanResources.EmployeeDepartmentHistory ed
+inner join HumanResources.Department d
+on ed.DepartmentID = d.DepartmentID
+inner join #tmp2008EmpAnnualSalary s
+on ed.BusinessEntityID = s.BusinessEntityID
+where ed.EndDate is null
+group by d.Name, d.DepartmentID
+order by d.DepartmentID
+
+
+

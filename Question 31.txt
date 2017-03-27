@@ -1,0 +1,21 @@
+--Tom Weatherall
+--10/11
+--Question 31
+
+
+--Part 1: determine range of product sizes
+select p.Size
+from Production.Product p
+where ISNUMERIC(p.Size) = '0'
+and p.Size is not null
+group by p.Size
+
+--Part 2: There are only 1000 labels in each size, determine how many additional labels, if any, need to be printed 
+select p.Size, sum(pinv.Quantity) CurrentQuantity, case when (sum(pinv.Quantity) > 1000) then (sum(pinv.Quantity)-1000) else '0' end as AdditionalQuantityNeeded
+from Production.Product p
+inner join Production.ProductInventory pinv
+on pinv.ProductID = p.ProductID
+where ISNUMERIC(p.Size) = '0'
+and p.Size is not null
+group by p.Size
+

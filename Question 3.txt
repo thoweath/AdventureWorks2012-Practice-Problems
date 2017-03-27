@@ -1,0 +1,149 @@
+--Cursor and variables
+
+declare @SubTot8 money 
+declare @OrderDate8 datetime
+declare @ordercount8 int
+declare @RunningTot8 money
+set @ordercount8 = 0
+set @RunningTot8 = 0
+
+DECLARE AggRevCursor8 CURSOR FOR  
+SELECT soh.SubTotal, soh.OrderDate
+FROM sales.SalesOrderHeader soh 
+where CONVERT(varchar(10), soh.OrderDate, 20) between '2007-07-01' and '2008-06-30'
+order by soh.OrderDate
+
+
+OPEN AggRevCursor8   
+FETCH NEXT FROM AggRevCursor8 INTO @SubTot8, @OrderDate8
+
+WHILE @@FETCH_STATUS = 0   
+BEGIN   
+	if @RunningTot8 < cast('10000000' as money)  
+		BEGIN
+			SET @RunningTot8 += @SubTot8 
+			
+			FETCH NEXT FROM AggRevCursor8 INTO @SubTot8, @OrderDate8
+
+			/* -- for debugging purposes
+			if @ordercount8 >= 1
+				BEGIN
+					print 'order count: ' + cast(@ordercount8 as varchar)
+					print 'order date: ' + cast(@orderdate8 as varchar)
+					print 'subtotal: ' + cast(@SubTot8 as varchar)
+					print 'running tot: ' + cast(@runningtot8 as varchar)
+				END */
+
+			set @ordercount8 += 1
+		END
+	else
+		break;
+END  
+
+
+-----------------------------------------------END CURSOR 1
+-----------------------------------------------END CURSOR 1
+--select @AggRevVar, @ordercount, @OrderDate
+/*
+select @AggRevVar AggregatedRev
+,@OrderDate OrderDate
+,@ordercount OrderCount
+into #tmpCursorTable
+
+
+drop table #tmpCursorTable
+select a.AggregatedRev, a.OrderCount, a.OrderDate
+from #tmpCursorTable a
+*/
+
+
+
+
+-----------------------------------------------START CURSOR 2007
+-----------------------------------------------START CURSOR 2007
+--Cursor and variables
+
+declare @SubTot7 money 
+declare @RunningTot7 money
+declare @OrderDate7 datetime
+declare @ordercount7 int
+set @ordercount7 = 0
+set @RunningTot7 = 0
+
+DECLARE AggRevCursor7 CURSOR FOR  
+SELECT soh.SubTotal, soh.OrderDate
+FROM sales.SalesOrderHeader soh 
+where CONVERT(varchar(10), soh.OrderDate, 20) between '2006-07-01' and '2007-06-30'
+
+
+OPEN AggRevCursor7   
+FETCH NEXT FROM AggRevCursor7 INTO @SubTot7, @OrderDate7
+
+WHILE @@FETCH_STATUS = 0   
+BEGIN   
+	if @RunningTot7 < cast('10000000' as money)  
+		BEGIN
+			SET @RunningTot7 += @SubTot7
+			FETCH NEXT FROM AggRevCursor7 INTO @SubTot7, @OrderDate7
+			set @ordercount7 += 1 
+		END
+	else
+		break; 
+END  
+
+
+--START SQL EXECUTION (RESULT OUTPUT)
+select 
+case 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) >=7  then '2008' 
+	when year(soh.orderdate) = '2008' and month(soh.OrderDate) <=6  then '2008' 
+	when year(soh.orderdate) = '2006' and month(soh.OrderDate) >=7  then '2007' 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) <=6  then '2007'   
+	end as FiscalYear, @OrderDate8 OrderDate, @ordercount8 OrderCount, @RunningTot8 RunningTotal
+from sales.salesorderheader soh
+where CONVERT(varchar(10), soh.OrderDate, 20) >= '2007-07-01' 
+and CONVERT(varchar(10), soh.OrderDate, 20) <= '2008-06-30'
+group by case 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) >=7  then '2008' 
+	when year(soh.orderdate) = '2008' and month(soh.OrderDate) <=6  then '2008' 
+	when year(soh.orderdate) = '2006' and month(soh.OrderDate) >=7  then '2007' 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) <=6  then '2007'   
+	end 
+
+UNION ALL
+
+select 
+case 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) >=7  then '2008' 
+	when year(soh.orderdate) = '2008' and month(soh.OrderDate) <=6  then '2008' 
+	when year(soh.orderdate) = '2006' and month(soh.OrderDate) >=7  then '2007' 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) <=6  then '2007'   
+	end as FiscalYear, @OrderDate7 OrderDate, @ordercount7 OrderCount, @RunningTot7 RunningTotal
+from sales.salesorderheader soh
+where CONVERT(varchar(10), soh.OrderDate, 20) >= '2006-07-01' 
+and CONVERT(varchar(10), soh.OrderDate, 20) <= '2007-06-30'
+group by case 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) >=7  then '2008' 
+	when year(soh.orderdate) = '2008' and month(soh.OrderDate) <=6  then '2008' 
+	when year(soh.orderdate) = '2006' and month(soh.OrderDate) >=7  then '2007' 
+	when year(soh.orderdate) = '2007' and month(soh.OrderDate) <=6  then '2007'   
+	end 
+
+CLOSE AggRevCursor7   
+DEALLOCATE AggRevCursor7
+
+CLOSE AggRevCursor8   
+DEALLOCATE AggRevCursor8
+
+
+
+--question 3 alternate solution for running total
+
+SELECT
+	year(soh.OrderDate),
+	SUM(SubTotal) OVER (ORDER BY OrderDate rows unbounded preceding) AS cumulative_sales
+	--,ROW_NUMBER() OVER (ORDER BY OrderDate) AS row_num
+FROM [AdventureWorks2012].[Sales].[SalesOrderHeader] soh
+WHERE OrderDate BETWEEN '2007/07/01 00:00:00' AND '2008/06/30 23:59:59' 
+
+

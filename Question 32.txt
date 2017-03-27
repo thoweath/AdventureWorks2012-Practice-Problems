@@ -1,0 +1,21 @@
+--Tom Weatherall
+--10/13
+--Question 32
+
+--Part 1: total number of emps, % male vs. female, avg number months employeed for all emps
+select count(*) Employees, round(sum(case when e.Gender = 'M' then 1 else 0 end) / convert(float, count(*)),2) [%Male],
+round(sum(case when e.gender = 'F' then 1 else 0 end) / cast(count(*) as float),2) [%Female], 
+avg(DATEDIFF(month,e.HireDate,cast('2008-01-01' as datetime))) AvgMonthsEmployeed
+from HumanResources.Employee e
+
+--Part 2: segment above stats into quartiles
+--Quartiles based on number of months employeed
+select e.Quartile, count(*) Employees, 
+round(sum(case when e.Gender = 'M' then 1 else 0 end) / convert(float, count(*)),2) [%Male],
+round(sum(case when e.gender = 'F' then 1 else 0 end) / cast(count(*) as float),2) [%Female], 
+avg(DATEDIFF(month,e.HireDate,cast('2008-01-01' as datetime))) AvgMonthsEmployeed
+from 
+(select  NTILE(4) over ( order by datediff(month,e.HireDate,cast('2008-01-01' as datetime))) Quartile,
+e.Gender, e.hiredate
+from HumanResources.Employee e) e
+group by e.Quartile
